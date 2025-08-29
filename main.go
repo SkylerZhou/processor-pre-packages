@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+    "io/ioutil"  // added for debugging
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"log/slog"
 )
 
+
 func main() {
 	programLevel := new(slog.LevelVar)
 	logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: programLevel}))
@@ -22,6 +24,18 @@ func main() {
 	integrationID := os.Getenv("INTEGRATION_ID")
 	logger.Info(integrationID)
 	inputDir := os.Getenv("INPUT_DIR")
+
+    // Debugging: Print out INPUT_DIR and list its contents
+    fmt.Printf("INPUT_DIR: %s\n", inputDir)
+    files, err := ioutil.ReadDir(inputDir)
+    if err != nil {
+        logger.ErrorContext(context.Background(), fmt.Sprintf("Failed to read INPUT_DIR: %s", err.Error()))
+    } else {
+        fmt.Println("Contents of INPUT_DIR:")
+        for _, file := range files {
+            fmt.Println(file.Name())
+        }
+    }
 
 	// get input files
 	sessionToken := os.Getenv("SESSION_TOKEN")
