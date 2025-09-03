@@ -25,18 +25,6 @@ func main() {
 	logger.Info(integrationID)
 	inputDir := os.Getenv("INPUT_DIR")
 
-    // Debugging: Print out INPUT_DIR and list its contents
-    fmt.Printf("INPUT_DIR: %s\n", inputDir)
-    files, err := ioutil.ReadDir(inputDir)
-    if err != nil {
-        logger.ErrorContext(context.Background(), fmt.Sprintf("Failed to read INPUT_DIR: %s", err.Error()))
-    } else {
-        fmt.Println("Contents of INPUT_DIR:")
-        for _, file := range files {
-            fmt.Println(file.Name())
-        }
-    }
-
 	// get input files
 	sessionToken := os.Getenv("SESSION_TOKEN")
 	apiHost := os.Getenv("PENNSIEVE_API_HOST")
@@ -90,7 +78,20 @@ func main() {
 		}
 	}
 
+	// Debugging: Print out INPUT_DIR and list its contents
+    fmt.Printf("INPUT_DIR: %s\n", inputDir)
+    files, err := ioutil.ReadDir(inputDir)
+    if err != nil {
+        logger.ErrorContext(context.Background(), fmt.Sprintf("Failed to read INPUT_DIR: %s", err.Error()))
+    } else {
+        fmt.Println("Contents of INPUT_DIR:")
+        for _, file := range files {
+            fmt.Println(file.Name())
+        }
+    }
+
 }
+
 
 type Packages struct {
 	NodeIds []string `json:"nodeIds"`
