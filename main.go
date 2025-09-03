@@ -33,17 +33,23 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	fmt.Println("Printing intergration response")
 	fmt.Println(string(integrationResponse))
 	var integration Integration
 	if err := json.Unmarshal(integrationResponse, &integration); err != nil {
 		logger.ErrorContext(context.Background(), err.Error())
 	}
+	
+	fmt.Println("Printing intergration")
 	fmt.Println(integration)
 
 	manifest, err := getPresignedUrls(apiHost, getPackageIds(integration.PackageIDs), sessionToken)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	fmt.Println("Printing manifest")
 	fmt.Println(string(manifest))
 	var payload Manifest
 	if err := json.Unmarshal(manifest, &payload); err != nil {
@@ -51,6 +57,7 @@ func main() {
 	}
 
 	// copy files into input directory
+	fmt.Println("Printing payload.Data")
 	fmt.Println(payload.Data)
 	for _, d := range payload.Data {
 		cmd := exec.Command("wget", "-v", "-O", d.FileName, d.Url)
@@ -60,6 +67,8 @@ func main() {
 		cmd.Stdout = &out
 		cmd.Stderr = &stderr
 		err := cmd.Run()
+		fmt.Println("Printing Filename and Url")
+		fmt.Println(string(d.FileName), string(d.Url))
 
 		// Print stdout content
 		stdoutContent := out.String()
