@@ -67,8 +67,18 @@ func main() {
 	// copy files into input directory
 	// loop through the pasrsed manifest data and use wget to download each file using their filename and Url
 	for _, d := range payload.Data {
+		
+		// SZ ADDED FOR DEBUGGING - SEP 30 2025
+		// Print all available data for each file
+		fmt.Println("=== File Details ===")
+		fmt.Println("NodeId:", d.NodeId)
+		fmt.Println("FileName:", d.FileName) 
+		fmt.Println("Path:", d.Path)
+		fmt.Println("Url:", d.Url)
+		fmt.Println("===================")
+		
 		cmd := exec.Command("wget", "-v", "-O", d.FileName, d.Url) // create a command for download 
-		cmd.Dir = inputDir // set the dowload location to inputDir 
+		cmd.Dir = inputDir // set the working dir to inputDir so the downladed files would go there
 		var out strings.Builder // creates a variable "out" with property as "strings.Builder" - like a notepad where you can keep adding text 
 		var stderr strings.Builder
 		cmd.Stdout = &out
