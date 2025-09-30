@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-    //"io/ioutil"  // added for debugging
 	"log"
 	"net/http"
 	"os"
@@ -37,7 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	//fmt.Println("Printing intergration response")
+	fmt.Println("Printing intergration response")
 	fmt.Println(string(integrationResponse))
 
 	// parse integration response
@@ -46,7 +45,7 @@ func main() {
 	if err := json.Unmarshal(integrationResponse, &integration); err != nil {
 		logger.ErrorContext(context.Background(), err.Error())
 	}
-	//fmt.Println("Printing intergration")
+	fmt.Println("Printing intergration")
 	fmt.Println(integration)
 
 	// get presigned URLs for the package IDs listed in the integration (previsouly itegration only listed package IDs but not URLs)
@@ -54,7 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	//fmt.Println("Printing manifest")
+	fmt.Println("Printing manifest")
 	fmt.Println(string(manifest))
 
 	// parse manifest response to get a list of files with their names and download URLs
@@ -62,8 +61,8 @@ func main() {
 	if err := json.Unmarshal(manifest, &payload); err != nil {
 		logger.ErrorContext(context.Background(), err.Error())
 	}
-	//fmt.Println("Printing payload.Data")
-	//fmt.Println(payload.Data)
+	fmt.Println("Printing payload.Data")
+	fmt.Println(payload.Data)
 	
 	// copy files into input directory
 	// loop through the pasrsed manifest data and use wget to download each file using their filename and Url
