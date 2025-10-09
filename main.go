@@ -72,7 +72,7 @@ func main() {
 		return
 	}
 	defer csvFile.Close()
-	csvFile.WriteString("source_path,target_path\n") // write CSV header
+	csvFile.WriteString("filename,source_path,target_path\n") // write CSV header
 	
 	// copy files into input directory
 	// loop through the pasrsed manifest data and use wget to download each file using their filename and Url
@@ -87,15 +87,17 @@ func main() {
 		
 		// SZ ADDED FOR DEBUGGING - SEP 30 2025
 		// Generate CSV data for this file
-		sourcePath := inputDir + "/" + d.FileName  // where the file will be downloaded
+		fileName := d.FileName // name of the file
+		sourcePath := inputDir + "/" + d.FileName   // full path where the file will be downloaded
 		var targetPath string
 		if len(d.Path) > 0 {
 			targetPath = strings.Join(d.Path, "/")  // reconstructed folder structure
 		} else {
 			targetPath = "."  // root directory
 		}
-		csvFile.WriteString(fmt.Sprintf("%s,%s\n", sourcePath, targetPath)) // Write to CSV file
+		csvFile.WriteString(fmt.Sprintf("%s,%s,%s\n", fileName, sourcePath, targetPath)) // Write to CSV file
 		
+		// cmd to copy files into input dir
 		cmd := exec.Command("wget", "-v", "-O", d.FileName, d.Url) // create a command for download 
 		cmd.Dir = inputDir // set the working dir to inputDir so the downladed files would go there
 		var out strings.Builder // creates a variable "out" with property as "strings.Builder" - like a notepad where you can keep adding text 
