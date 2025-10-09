@@ -64,6 +64,16 @@ func main() {
 	fmt.Println("Printing payload.Data")
 	fmt.Println(payload.Data)
 	
+	// SZ ADDED FOR DEBUGGING - SEP 30 2025
+	// Create CSV file for the folder structure mapping
+	csvFile, err := os.Create(inputDir + "/file_paths.csv")
+	if err != nil {
+		logger.Error("Failed to create CSV file", slog.String("error", err.Error()))
+		return
+	}
+	defer csvFile.Close()
+	csvFile.WriteString("source_path,target_path\n") // write CSV header
+	
 	// copy files into input directory
 	// loop through the pasrsed manifest data and use wget to download each file using their filename and Url
 	for _, d := range payload.Data {
@@ -71,11 +81,20 @@ func main() {
 		// SZ ADDED FOR DEBUGGING - SEP 30 2025
 		// Print all available data for each file
 		fmt.Println("=== File Details ===")
-		fmt.Println("NodeId:", d.NodeId)
 		fmt.Println("FileName:", d.FileName) 
 		fmt.Println("Path:", d.Path)
-		fmt.Println("Url:", d.Url)
 		fmt.Println("===================")
+		
+		// SZ ADDED FOR DEBUGGING - SEP 30 2025
+		// Generate CSV data for this file
+		sourcePath := inputDir + "/" + d.FileName  // where the file will be downloaded
+		var targetPath string
+		if len(d.Path) > 0 {
+			targetPath = strings.Join(d.Path, "/")  // reconstructed folder structure
+		} else {
+			targetPath = "."  // root directory
+		}
+		csvFile.WriteString(fmt.Sprintf("%s,%s\n", sourcePath, targetPath)) // Write to CSV file
 		
 		cmd := exec.Command("wget", "-v", "-O", d.FileName, d.Url) // create a command for download 
 		cmd.Dir = inputDir // set the working dir to inputDir so the downladed files would go there
@@ -84,8 +103,6 @@ func main() {
 		cmd.Stdout = &out
 		cmd.Stderr = &stderr
 		err := cmd.Run() // execute the command
-		fmt.Println("Printing Filename and Url") // for debugging
-		fmt.Println(string(d.FileName), string(d.Url))
 
 		// print stdout content
 		stdoutContent := out.String()
