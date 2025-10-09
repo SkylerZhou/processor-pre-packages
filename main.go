@@ -16,6 +16,8 @@ import (
 
 
 func main() {
+	
+	// ----- SECTION 1: INITIAL SETUP -----
 	// set up logger using GO's built-in slog package 
 	programLevel := new(slog.LevelVar)
 	logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: programLevel}))
@@ -66,6 +68,7 @@ func main() {
 	
 	
 
+	// ----- SECTION 2: CSV CREATION -----
 	// SZ ADDED FOR DEBUGGING - OCT 09 2025
 	// Create CSV file for the folder structure mapping
 	csvFile, err := os.Create(inputDir + "/file_paths.csv")
@@ -89,13 +92,13 @@ func main() {
 		csvFile.WriteString(fmt.Sprintf("%s,%s,%s\n", fileName, sourcePath, targetPath)) // Write to CSV file
 	}
 
-	
 
-	// copy files into input directory
-	// loop through the pasrsed manifest data and use wget to download each file using their filename and Url
+	// ----- SECTION 3: FILE DOWNLOAD -----
+	// SZ ADDED FOR DEBUGGING - OCT 09 2025
+	// copy files into input directory WITH FOLDER STRUCTURE
+	// loop through the parsed manifest data and use wget to download each file maintaining hierarchy
 	for _, d := range payload.Data {
 		
-
 		// SZ ADDED FOR DEBUGGING - SEP 30 2025
 		// Print all available data for each file
 		fmt.Println("=== File Details ===")
@@ -103,32 +106,92 @@ func main() {
 		fmt.Println("Path:", d.Path)
 		fmt.Println("===================")
 		
-
+		// Construct the target directory path based on the folder structure
+		var targetDir string
+		if len(d.Path) > 0 {
+			// Join the path elements to create subdirectory structure
+			targetDir = inputDir + "/" + strings.Join(d.Path, "/") // e.g. /mnt/efs/input/xxxxxxxx/twolayer/onelayer
+		} else {
+			// If no path, download to root of inputDir
+			targetDir = inputDir // e.g. /mnt/efs/input/xxxxxxxx for file with no subfolder
+		}
+		
+		// Create the directory structure if it doesn't exist
+		if err := os.MkdirAll(targetDir, 0755); err != nil {
+			logger.Error("Failed to create directory structure",
+				slog.String("directory", targetDir),
+				slog.String("error", err.Error()))
+			continue // Skip this file and continue with next
+		}
+		
 		// cmd to copy files into input dir
-		cmd := exec.Command("wget", "-v", "-O", d.FileName, d.Url) // create a command for download 
-		cmd.Dir = inputDir // set the working dir to inputDir so the downladed files would go there
-		var out strings.Builder // creates a variable "out" with property as "strings.Builder" - like a notepad where you can keep adding text 
+		// Full path where the file will be saved
+		fullFilePath := targetDir + "/" + d.FileName // e.g. /mnt/efs/input/xxxxxxxx/twolayer/onelayer/df1.csv
+		fmt.Printf("Downloading to: %s\n", fullFilePath)
+		// cmd to download file into the structured directory
+		cmd := exec.Command("wget", "-v", "-O", fullFilePath, d.Url) // Note: we don't set cmd.Dir because we're using absolute paths
+		var out strings.Builder
 		var stderr strings.Builder
 		cmd.Stdout = &out
 		cmd.Stderr = &stderr
-		downloadErr := cmd.Run() // execute the command
-
-		// print stdout content
-		stdoutContent := out.String()
-		fmt.Println("Stdout output:")
-		fmt.Println(stdoutContent)
-
-		// print or log stderr content
-		stderrContent := stderr.String()
-		fmt.Println("Stderr output (verbose output):")
-		fmt.Println(stderrContent)
-
+		
 		// If there was an error, log it
-		if downloadErr != nil {
-			logger.Error(downloadErr.Error(),
-				slog.String("error", stderrContent))
-}
+		if err := cmd.Run(); err != nil {
+			logger.Error("Download failed",
+				slog.String("file", d.FileName),
+				slog.String("error", stderr.String()))
+			continue
+		}
+		
+		// Print stdout content
+		fmt.Println("Stdout output:")
+		fmt.Println(out.String())
+		
+		// Print stderr content (wget verbose output)
+		fmt.Println("Stderr output (verbose output):")
+		fmt.Println(stderr.String())
+		
+		fmt.Printf("✓ Successfully downloaded: %s\n\n", fullFilePath)
 	}
+
+	// // copy files into input directory
+	// // loop through the pasrsed manifest data and use wget to download each file using their filename and Url
+	// for _, d := range payload.Data {
+		
+
+	// 	// SZ ADDED FOR DEBUGGING - SEP 30 2025
+	// 	// Print all available data for each file
+	// 	fmt.Println("=== File Details ===")
+	// 	fmt.Println("FileName:", d.FileName) 
+	// 	fmt.Println("Path:", d.Path)
+	// 	fmt.Println("===================")
+		
+
+	// 	// cmd to copy files into input dir
+	// 	cmd := exec.Command("wget", "-v", "-O", d.FileName, d.Url) // create a command for download 
+	// 	cmd.Dir = inputDir // set the working dir to inputDir so the downladed files would go there
+	// 	var out strings.Builder // creates a variable "out" with property as "strings.Builder" - like a notepad where you can keep adding text 
+	// 	var stderr strings.Builder
+	// 	cmd.Stdout = &out
+	// 	cmd.Stderr = &stderr
+	// 	downloadErr := cmd.Run() // execute the command
+
+	// 	// print stdout content
+	// 	stdoutContent := out.String()
+	// 	fmt.Println("Stdout output:")
+	// 	fmt.Println(stdoutContent)
+
+	// 	// print or log stderr content
+	// 	stderrContent := stderr.String()
+	// 	fmt.Println("Stderr output (verbose output):")
+	// 	fmt.Println(stderrContent)
+
+	// 	// If there was an error, log it
+	// 	if downloadErr != nil {
+	// 		logger.Error(downloadErr.Error(),
+	// 			slog.String("error", stderrContent))
+	// 	}
+	// }
 
 }
 
