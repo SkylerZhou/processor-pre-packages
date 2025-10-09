@@ -64,7 +64,9 @@ func main() {
 	fmt.Println("Printing payload.Data")
 	fmt.Println(payload.Data)
 	
-	// SZ ADDED FOR DEBUGGING - SEP 30 2025
+	
+
+	// SZ ADDED FOR DEBUGGING - OCT 09 2025
 	// Create CSV file for the folder structure mapping
 	csvFile, err := os.Create(inputDir + "/file_paths.csv")
 	if err != nil {
@@ -73,19 +75,8 @@ func main() {
 	}
 	defer csvFile.Close()
 	csvFile.WriteString("filename,source_path,target_path\n") // write CSV header
-	
-	// copy files into input directory
-	// loop through the pasrsed manifest data and use wget to download each file using their filename and Url
+
 	for _, d := range payload.Data {
-		
-		// SZ ADDED FOR DEBUGGING - SEP 30 2025
-		// Print all available data for each file
-		fmt.Println("=== File Details ===")
-		fmt.Println("FileName:", d.FileName) 
-		fmt.Println("Path:", d.Path)
-		fmt.Println("===================")
-		
-		// SZ ADDED FOR DEBUGGING - SEP 30 2025
 		// Generate CSV data for this file
 		fileName := d.FileName // name of the file
 		sourcePath := inputDir + "/" + d.FileName   // full path where the file will be downloaded
@@ -96,7 +87,23 @@ func main() {
 			targetPath = "."  // root directory
 		}
 		csvFile.WriteString(fmt.Sprintf("%s,%s,%s\n", fileName, sourcePath, targetPath)) // Write to CSV file
+	}
+
+	
+
+	// copy files into input directory
+	// loop through the pasrsed manifest data and use wget to download each file using their filename and Url
+	for _, d := range payload.Data {
 		
+
+		// SZ ADDED FOR DEBUGGING - SEP 30 2025
+		// Print all available data for each file
+		fmt.Println("=== File Details ===")
+		fmt.Println("FileName:", d.FileName) 
+		fmt.Println("Path:", d.Path)
+		fmt.Println("===================")
+		
+
 		// cmd to copy files into input dir
 		cmd := exec.Command("wget", "-v", "-O", d.FileName, d.Url) // create a command for download 
 		cmd.Dir = inputDir // set the working dir to inputDir so the downladed files would go there
@@ -104,7 +111,7 @@ func main() {
 		var stderr strings.Builder
 		cmd.Stdout = &out
 		cmd.Stderr = &stderr
-		err := cmd.Run() // execute the command
+		downloadErr := cmd.Run() // execute the command
 
 		// print stdout content
 		stdoutContent := out.String()
@@ -117,10 +124,10 @@ func main() {
 		fmt.Println(stderrContent)
 
 		// If there was an error, log it
-		if err != nil {
-			logger.Error(err.Error(),
+		if downloadErr != nil {
+			logger.Error(downloadErr.Error(),
 				slog.String("error", stderrContent))
-		}
+}
 	}
 
 }
