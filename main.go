@@ -26,7 +26,7 @@ func main() {
 	// read required environment variables: where to authenticate token, download files, etc
 	integrationID := os.Getenv("INTEGRATION_ID")
 	logger.Info(integrationID)
-	inputDir := os.Getenv("INPUT_DIR")
+	outputDir := os.Getenv("OUTPUT_DIR")
 	sessionToken := os.Getenv("SESSION_TOKEN")
 	apiHost := os.Getenv("PENNSIEVE_API_HOST")
 	apiHost2 := os.Getenv("PENNSIEVE_API_HOST2")
@@ -71,7 +71,7 @@ func main() {
 	// ----- SECTION 2: CSV CREATION -----
 	// SZ ADDED FOR DEBUGGING - OCT 09 2025
 	// Create CSV file for the folder structure mapping
-	csvFile, err := os.Create(inputDir + "/file_paths.csv")
+	csvFile, err := os.Create(outputDir + "/file_paths.csv")
 	if err != nil {
 		logger.Error("Failed to create CSV file", slog.String("error", err.Error()))
 		return
@@ -82,7 +82,7 @@ func main() {
 	for _, d := range payload.Data {
 		// Generate CSV data for this file
 		fileName := d.FileName // name of the file
-		sourcePath := inputDir + "/" + d.FileName   // full path where the file will be downloaded
+		sourcePath := outputDir + "/" + d.FileName   // full path where the file will be downloaded
 		var targetPath string
 		if len(d.Path) > 0 {
 			targetPath = strings.Join(d.Path, "/")  // reconstructed folder structure
@@ -99,21 +99,14 @@ func main() {
 	// loop through the parsed manifest data and use wget to download each file maintaining hierarchy
 	for _, d := range payload.Data {
 		
-		// SZ ADDED FOR DEBUGGING - SEP 30 2025
-		// Print all available data for each file
-		fmt.Println("=== File Details ===")
-		fmt.Println("FileName:", d.FileName) 
-		fmt.Println("Path:", d.Path)
-		fmt.Println("===================")
-		
 		// Construct the target directory path based on the folder structure
 		var targetDir string
 		if len(d.Path) > 0 {
 			// Join the path elements to create subdirectory structure
-			targetDir = inputDir + "/" + strings.Join(d.Path, "/") // e.g. /mnt/efs/input/xxxxxxxx/twolayer/onelayer
+			targetDir = outputDir + "/" + strings.Join(d.Path, "/") // e.g. /mnt/efs/input/xxxxxxxx/twolayer/onelayer
 		} else {
-			// If no path, download to root of inputDir
-			targetDir = inputDir // e.g. /mnt/efs/input/xxxxxxxx for file with no subfolder
+			// If no path, download to root of outputDir
+			targetDir = outputDir // e.g. /mnt/efs/input/xxxxxxxx for file with no subfolder
 		}
 		
 		// Create the directory structure if it doesn't exist
@@ -128,6 +121,7 @@ func main() {
 		// Full path where the file will be saved
 		fullFilePath := targetDir + "/" + d.FileName // e.g. /mnt/efs/input/xxxxxxxx/twolayer/onelayer/df1.csv
 		fmt.Printf("Downloading to: %s\n", fullFilePath)
+		
 		// cmd to download file into the structured directory
 		cmd := exec.Command("wget", "-v", "-O", fullFilePath, d.Url) // Note: we don't set cmd.Dir because we're using absolute paths
 		var out strings.Builder
@@ -169,7 +163,7 @@ func main() {
 
 	// 	// cmd to copy files into input dir
 	// 	cmd := exec.Command("wget", "-v", "-O", d.FileName, d.Url) // create a command for download 
-	// 	cmd.Dir = inputDir // set the working dir to inputDir so the downladed files would go there
+	// 	cmd.Dir = outputDir // set the working dir to outputDir so the downladed files would go there
 	// 	var out strings.Builder // creates a variable "out" with property as "strings.Builder" - like a notepad where you can keep adding text 
 	// 	var stderr strings.Builder
 	// 	cmd.Stdout = &out
